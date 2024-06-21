@@ -1,11 +1,9 @@
-import requests, shutil, os, rich, re
-
+import requests, shutil, os, re
 from tqdm.auto import tqdm
 from PyPDF2 import PdfReader
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
-
 
 def get_section_list():  # get list of sections
     # initialize driver
@@ -98,14 +96,13 @@ def merge_pdfs(file_list: list, out_text_file: str):
 
         # success message
         print(
-            f"{len(file_list)} research paper PDFs extracted to single text file [bold green]{out_text_file}[/bold green] of size {shutil.disk_usage(out_text_file)}"
+            f"{len(file_list)} research paper PDFs extracted to single text file {out_text_file}"
         )
-
         return text_corpus
 
     # exception hanndling and colored output
     except Exception as e:
-        print(f"[bold red] Error in extraction --> {e}")
+        print(f"Error in extraction --> {e}")
 
     return text_corpus
 
@@ -114,7 +111,7 @@ def arxiv_scraper(section: str):
     arxiv_tree_url = f"http://arxiv.org/list/{section}"
 
     # LG(machine learning), CL(computation and language)
-    pdf_folder = f"arxiv_{section}_pdfs"
+    pdf_folder = f"arxiv_{section.split('.')[1]}_pdfs"
     os.mkdir(pdf_folder)
 
     # initialize driver
@@ -148,7 +145,7 @@ def arxiv_scraper(section: str):
     pdf_list = os.listdir(pdf_folder)
     pdf_list = [os.path.join(os.getcwd(), pdf_folder, pdfile) for pdfile in pdf_list]
 
-    out_text_file = f"arxiv_cspapers_{section}.txt"
+    out_text_file = f"arxiv_cspapers_{section.split('.')[1]}.txt"
 
     corpus = merge_pdfs(pdf_list, out_text_file)
     print("Extraction and merging complete ⚡️⚡️")
@@ -166,12 +163,13 @@ for cs_field in cs_fields:  # you could also add a split like cs_fields [:10] to
         print(f"begin for {cs_field}")
         arxiv_corpus = arxiv_scraper(cs_field)
         text_corpus += arxiv_corpus
+
     except Exception as e:
-        print("error" + e)
+        print(f"[error]{e}")
 
         continue
 
-with open("arxiv_cs_researchpapers0.txt", "w", encoding="utf-8") as file:
+with open("arxiv_csresearch_0.txt", "w", encoding="utf-8") as file:
     file.write(text_corpus)
 
 print(f"total length of corpus => {len(text_corpus)}")
