@@ -65,7 +65,8 @@ def clean_text(text):  # regex cleaning function
     return cleaned_text
 
 
-def pdf2text_file(pdf_file: str):  # extrcat text from pdf
+def pdf2text_file(pdf_file: str):
+    # extrcat text from pdf
     extract_text = ""
     pdf_read = PdfReader(pdf_file)
 
@@ -85,7 +86,7 @@ def merge_pdfs(file_list: list, out_text_file: str):
                 text_extract = pdf2text_file(pdf)
                 text_corpus += text_extract  # concat text and add space before the next one is added
                 text_corpus += "\n  "
-                rich.print(f"Extracted [white] {pdf}")
+                print(f"Extracted [white] {pdf}")
 
                 with open(out_text_file, "w", encoding="utf-8") as file:
                     file.write(text_corpus)  # write to text file
@@ -96,26 +97,25 @@ def merge_pdfs(file_list: list, out_text_file: str):
                 continue
 
         # success message
-        rich.print(
+        print(
             f"{len(file_list)} research paper PDFs extracted to single text file [bold green]{out_text_file}[/bold green] of size {shutil.disk_usage(out_text_file)}"
         )
 
         return text_corpus
-    
+
     # exception hanndling and colored output
     except Exception as e:
-        rich.print(f"[bold red] Error in extraction --> {e}")
+        print(f"[bold red] Error in extraction --> {e}")
 
     return text_corpus
 
 
 def arxiv_scraper(section: str):
-    arxiv_tree_url = f"http://arxiv.org/list/cs.{section}"
+    arxiv_tree_url = f"http://arxiv.org/list/{section}"
 
-     # LG(machine learning), CL(computation and language)
-    pdf_folder = f"arxiv_cs_{section}"
+    # LG(machine learning), CL(computation and language)
+    pdf_folder = f"arxiv_{section}_pdfs"
     os.mkdir(pdf_folder)
-
 
     # initialize driver
     drive_opts = Options()
@@ -123,12 +123,12 @@ def arxiv_scraper(section: str):
     driver = webdriver.Firefox(options=drive_opts)
     print("Driver init")
 
-     # load page content
+    # load page content
     driver.get(f"{arxiv_tree_url}/recent?skip=0&show=2000")
     print("Driver loaded...🔥")
 
     # get all pdf links and titles
-    pdf_links = driver.find_elements(By.LINK_TEXT, 'pdf')
+    pdf_links = driver.find_elements(By.LINK_TEXT, "pdf")
     titles = driver.find_elements(By.CLASS_NAME, "list-title")
     print(f"Number of links  => {len(pdf_links)}")
     print(f"Number of titles  => {len(titles)}")
@@ -140,17 +140,16 @@ def arxiv_scraper(section: str):
     print(f"Link and titles retrieved. e.g => {paper_titles[0]}: {pdf_links[0]}")
 
     driver.quit()
-    print('driver terminated')
+    print("driver terminated")
 
     download_files(pdf_links, paper_titles, pdf_folder)
-
 
     print("Begin pdf merging")
     pdf_list = os.listdir(pdf_folder)
     pdf_list = [os.path.join(os.getcwd(), pdf_folder, pdfile) for pdfile in pdf_list]
 
     out_text_file = f"arxiv_cspapers_{section}.txt"
-    
+
     corpus = merge_pdfs(pdf_list, out_text_file)
     print("Extraction and merging complete ⚡️⚡️")
 
@@ -160,8 +159,21 @@ def arxiv_scraper(section: str):
 # main
 cs_fields = get_section_list()
 
-for cs_field in cs_fields:
-    arxiv_corpus = arxiv_scraper(cs_field)
-    print(f'total length of corpus => {len(arxiv_corpus)}')
+text_corpus = ""
 
-print('Arxiv computer science research text data successfully scraped')
+for cs_field in cs_fields:  # you could also add a split like cs_fields [:10] to scrape the first 10 fields
+    try:
+        print(f"begin for {cs_field}")
+        arxiv_corpus = arxiv_scraper(cs_field)
+        text_corpus += arxiv_corpus
+    except Exception as e:
+        print("error" + e)
+
+        continue
+
+with open("arxiv_cs_researchpapers0.txt", "w", encoding="utf-8") as file:
+    file.write(text_corpus)
+
+print(f"total length of corpus => {len(text_corpus)}")
+
+print("Arxiv computer science research text data successfully scraped")
